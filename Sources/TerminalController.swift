@@ -1147,6 +1147,12 @@ class TerminalController {
         case "current_workspace":
             return currentWorkspace()
 
+        case "set_workspace_color":
+            return setWorkspaceColor(args)
+
+        case "list_workspace_colors":
+            return listWorkspaceColors()
+
         case "send":
             return sendInput(args)
 
@@ -10288,6 +10294,39 @@ class TerminalController {
             result = tabs.joined(separator: "\n")
         }
         return result.isEmpty ? "No workspaces" : result
+    }
+
+    private func setWorkspaceColor(_ args: String) -> String {
+        guard let tabManager = tabManager else { return "ERROR: TabManager not available" }
+
+        let parts = args.trimmingCharacters(in: .whitespaces).split(separator: " ", maxSplits: 1)
+        guard parts.count == 2 else { return "ERROR: Usage: set_workspace_color <uuid> <#hex|none>" }
+
+        guard let uuid = UUID(uuidString: String(parts[0])) else {
+            return "ERROR: Invalid UUID"
+        }
+
+        let colorArg = String(parts[1]).trimmingCharacters(in: .whitespaces)
+        let color: String? = colorArg.lowercased() == "none" ? nil : colorArg
+
+        DispatchQueue.main.sync {
+            tabManager.setTabColor(tabId: uuid, color: color)
+        }
+        return "OK"
+    }
+
+    private func listWorkspaceColors() -> String {
+        guard let tabManager = tabManager else { return "ERROR: TabManager not available" }
+
+        var result: String = ""
+        DispatchQueue.main.sync {
+            let lines = tabManager.tabs.compactMap { tab -> String? in
+                guard let color = tab.customColor else { return nil }
+                return "\(tab.id.uuidString) \(color)"
+            }
+            result = lines.joined(separator: "\n")
+        }
+        return result.isEmpty ? "No colors" : result
     }
 
     private func newWorkspace() -> String {
