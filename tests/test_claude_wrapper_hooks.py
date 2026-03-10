@@ -139,10 +139,8 @@ def test_live_socket_injects_supported_hooks(failures: list[str]) -> None:
 
     settings = parse_settings_arg(real_argv)
     hooks = settings.get("hooks", {})
-    expect(set(hooks.keys()) == {"SessionStart", "Stop", "Notification"}, f"unexpected hook keys: {hooks.keys()}", failures)
-    serialized = json.dumps(settings, sort_keys=True)
-    expect("UserPromptSubmit" not in serialized, "UserPromptSubmit hook should not be injected", failures)
-    expect("prompt-submit" not in serialized, "prompt-submit subcommand should not be injected", failures)
+    expect(set(hooks.keys()) == {"SessionStart", "Stop", "Notification", "UserPromptSubmit"}, f"unexpected hook keys: {hooks.keys()}", failures)
+    expect("prompt-submit" in json.dumps(settings), "UserPromptSubmit hook should inject prompt-submit subcommand", failures)
 
 
 def test_missing_socket_skips_hook_injection(failures: list[str]) -> None:
